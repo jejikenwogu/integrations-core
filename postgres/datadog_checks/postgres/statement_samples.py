@@ -65,7 +65,7 @@ class DBExplainSetupState(Enum):
     # invalid schema for explain function
     invalid_schema = 3
 
-    # failed to execute explain fucntion
+    # failed to execute explain function
     failed_function = 4
 
     # received an invalid result when invoking the explain function
