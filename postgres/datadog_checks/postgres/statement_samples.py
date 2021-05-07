@@ -124,12 +124,16 @@ class PostgresStatementSamples(object):
     def cancel(self):
         self._cancel_event.set()
 
-    def _dbtags(self, db):
+    def _dbtags(self, db, *extra_tags):
         """
         Returns the default instance tags with the initial "db" tag replaced with the provided tag
         """
         t = ["db:" + db]
-        return self._tags_no_db + t if self._tags_no_db else t
+        if extra_tags:
+            t.extend(extra_tags)
+        if self._tags_no_db:
+            t.extend(self._tags_no_db)
+        return t
 
     def run_sampler(self, tags):
         """
@@ -367,7 +371,7 @@ class PostgresStatementSamples(object):
             self._check.count(
                 "dd.postgres.statement_samples.error",
                 1,
-                tags=self._dbtags(dbname) + ["error:explain-{}".format(explain_setup_state)],
+                tags=self._dbtags(dbname, "error:explain-{}".format(explain_setup_state)),
             )
             return None
 
@@ -378,7 +382,7 @@ class PostgresStatementSamples(object):
             self._check.count(
                 "dd.postgres.statement_samples.error",
                 1,
-                tags=self._dbtags(dbname) + ["error:explain-{}".format(type(e))],
+                tags=self._dbtags(dbname, "error:explain-{}".format(type(e))),
             )
             return None
 
@@ -388,7 +392,7 @@ class PostgresStatementSamples(object):
         except Exception as e:
             self._log.debug("Failed to obfuscate statement: %s", e)
             self._check.count(
-                "dd.postgres.statement_samples.error", 1, tags=self._dbtags(row['datname']) + ["error:sql-obfuscate"]
+                "dd.postgres.statement_samples.error", 1, tags=self._dbtags(row['datname'], "error:sql-obfuscate")
             )
             return None
 
