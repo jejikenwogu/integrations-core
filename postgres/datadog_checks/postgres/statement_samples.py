@@ -52,10 +52,23 @@ EXPLAIN_VALIDATION_QUERY = "SELECT * FROM pg_stat_activity"
 
 
 class DBExplainSetupState(Enum):
+    """
+    Denotes the various states the database can be in with respect to enabling the agent to collect execution plans.
+    """
+
+    # agent is able to collect execution plans using the configured explain function
     ok = 1
+
+    # failed to connect to the database
     failed_connect = 2
+
+    # invalid schema for explain function
     invalid_schema = 3
+
+    # failed to execute explain fucntion
     failed_function = 4
+
+    # received an invalid result when invoking the explain function
     invalid_result = 5
 
 
@@ -134,7 +147,7 @@ class PostgresStatementSamples(object):
         self._tags_no_db = [t for t in tags if not t.startswith('db:')]
         for t in self._tags:
             if t.startswith('service:'):
-                self._service = t[len('service:') :]
+                self._service = t[len('service:'):]
 
         self._last_check_run = time.time()
         if self._run_sync or is_affirmative(os.environ.get('DBM_STATEMENT_SAMPLER_RUN_SYNC', "false")):
@@ -290,6 +303,7 @@ class PostgresStatementSamples(object):
         return True
 
     def _get_db_explain_setup_state(self, dbname):
+        # type: (str) -> DBExplainSetupState
         try:
             self._get_db(dbname)
         except (psycopg2.DatabaseError, psycopg2.OperationalError) as e:
@@ -315,6 +329,7 @@ class PostgresStatementSamples(object):
         return DBExplainSetupState.ok
 
     def _get_db_explain_setup_state_cached(self, dbname):
+        # type: (str) -> DBExplainSetupState
         explain_setup_state = self._collection_strategy_cache.get(dbname)
         if explain_setup_state:
             self._log.debug("using cached explain_setup_state for DB '%s': %s", dbname, explain_setup_state)
@@ -324,7 +339,6 @@ class PostgresStatementSamples(object):
         self._collection_strategy_cache[dbname] = explain_setup_state
         self._log.debug("caching new explain_setup_state for DB '%s': %s", dbname, explain_setup_state)
 
-        # try explain pg_stat_activity
         return explain_setup_state
 
     def _run_explain(self, dbname, statement, obfuscated_statement):
