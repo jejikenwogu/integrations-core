@@ -147,7 +147,7 @@ class PostgresStatementSamples(object):
         self._tags_no_db = [t for t in tags if not t.startswith('db:')]
         for t in self._tags:
             if t.startswith('service:'):
-                self._service = t[len('service:'):]
+                self._service = t[len('service:') :]
 
         self._last_check_run = time.time()
         if self._run_sync or is_affirmative(os.environ.get('DBM_STATEMENT_SAMPLER_RUN_SYNC', "false")):
